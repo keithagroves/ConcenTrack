@@ -17,6 +17,8 @@ interval = 5 * 60  # 5 minutes
 
 # Directory to temporarily save screenshots.
 save_dir = os.path.expanduser("~/screenshots")
+log_file = os.path.expanduser("~/summary_log.txt")
+
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
@@ -47,7 +49,7 @@ def analyze_image(image_path):
     try:
         # Call the new API method using the client instance.
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # or use "gpt-4" if you have access.
+            model="gpt-4o",  # or use "gpt-4" if you have access.
             messages=[
                 {
                     "role": "system",
@@ -62,6 +64,33 @@ def analyze_image(image_path):
         return summary
     except Exception as e:
         return f"Error during OpenAI API call: {e}"
+
+
+def get_active_application():
+    """
+    Uses AppleScript to get the currently active application name on macOS.
+    """
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", 'tell application "System Events" to get name of application processes whose frontmost is true'],
+            capture_output=True,
+            text=True
+        )
+        return result.stdout.strip() or "Unknown"
+    except Exception:
+        return "Unknown"
+
+
+def log_summary(timestamp, screenshot_filename, summary_text):
+    """
+    Appends the summary and associated data to a log file.
+    """
+    with open(log_file, "a") as f:
+        f.write(f"Timestamp: {timestamp}\n")
+        f.write(f"Screenshot: {screenshot_filename}\n")
+        f.write("Summary:\n")
+        f.write(summary_text + "\n")
+        f.write("=" * 40 + "\n\n")
 
 
 def main():
@@ -82,6 +111,10 @@ def main():
             # Analyze the screenshot with OCR and the OpenAI API.
             summary = analyze_image(filename)
             print(f"Summary:\n{summary}\n")
+
+            # Log the summary to a file.
+            log_summary(timestamp, filename, summary)
+            print(f"Logged summary to: {log_file}")
 
             # Delete the screenshot file.
             try:
