@@ -1,0 +1,19 @@
+# Ignore the entire productivity folder
+productivity/
+
+# Ignore specific file types inside productivity (if you ever add these)
+productivity/*.json
+productivity/*.csv
+productivity/*.log
+productivity/*.png
+
+# Ignore common Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Ignore system-specific files
+.DS_Store

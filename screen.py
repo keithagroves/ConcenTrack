@@ -5,20 +5,14 @@ import os
 import json
 import pytesseract
 from PIL import Image
-from openai import OpenAI  # Import the new client-based API
+from openai import OpenAI
 
-# Instantiate an OpenAI client.
-# Make sure your environment variable OPENAI_API_KEY is set, or assign the key directly.
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-# Alternatively, you could uncomment the next line and set your key directly:
-# client = OpenAI(api_key="your-api-key-here")
 
-# Configuration
-interval = 5 * 60  # 5 minutes
-save_dir = os.path.expanduser("~/productivity/screenshots")
-log_file = os.path.expanduser("~/productivity/summary_log.json")
+interval = 5 * 60
+save_dir = os.path.expanduser("./productivity/screenshots")
+log_file = os.path.expanduser("./productivity/summary_log.json")
 
-# Ensure directories exist
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
@@ -26,13 +20,13 @@ if not os.path.exists(save_dir):
 def summarize_text(text):
     try:
         prompt = (
-            f"Summarize the contents of the following screenshot text:\n\n"
+            f"the following describes what is on the user's screen.:\n\n"
             f"{text}\n\n"
-            "Summary:"
+            "Please summarize:"
         )
         response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "system", "content": "Summaraize the text."},
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": "Explain what the user is doing based on the text on their screen."},
                       {"role": "user", "content": prompt}],
             temperature=0.3,
         )
@@ -54,7 +48,6 @@ def analyze_image(image_path):
     if not extracted_text.strip():
         return {"text": "No text detected", "category": "Idle/Empty Screen"}
 
-    # Categorize content
     category = categorize_content(extracted_text)
     summary = summarize_text(extracted_text)
 
@@ -93,7 +86,7 @@ def categorize_content(text):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[{"role": "system", "content": "You are a classifier that categorizes user activity based on what you see on the user's screen."},
                       {"role": "user", "content": prompt}],
             temperature=0.3,
@@ -161,10 +154,8 @@ def main():
             print(f"Summary ({category} - {active_app}):\n{summary_text}\n")
             print(f"Logged to: {log_file}")
 
-            # Delete the screenshot after processing
             os.remove(filename)
 
-            # Wait for next cycle
             time.sleep(interval)
     except KeyboardInterrupt:
         print("\nScreenshot capture stopped.")
